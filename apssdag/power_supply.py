@@ -1,3 +1,6 @@
+from typing import TypedDict
+
+
 class PowerSupply:
     _name: str
 
@@ -12,3 +15,7 @@ class PowerSupply:
     def name(self, value: str) -> None:
         self._name = value
         # TODO: propogate to connections
+
+
+class PowerSupplyData(TypedDict):
+    name: str

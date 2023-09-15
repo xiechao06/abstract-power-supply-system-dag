@@ -1,3 +1,6 @@
+from typing import TypedDict
+
+
 class Load:
     _name: str
 
@@ -12,3 +15,7 @@ class Load:
     def name(self, value: str) -> None:
         self._name = value
         # TODO: propagate to connections
+
+
+class LoadData(TypedDict):
+    name: str

@@ -2,10 +2,9 @@
 
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
 
-供电系统抽象有向无环图(directed acyclic graph或dag)，是供电系统分析的核心数据结构 
+供电系统抽象有向无环图(directed acyclic graph或dag)，是供电系统分析的核心数据结构
 
 ## Sample
-
 
 ```python
 from apssdag import AbstractPowerSupplySystemDagBuilder 

@@ -1,14 +1,15 @@
 import pytest
-from apssdag import AbstractPowerSupplySystemBuilder, Connection, Bus, Load
+
+from apssdag import AbstractPowerSupplySystemDagBuilder, Connection
 from apssdag.exceptions import NoSuchObject
 
 
 class TestBuilder:
     def test_add_connection_1(self):
         builder = (
-            AbstractPowerSupplySystemBuilder()
-            .add_bus(Bus("bus1"))
-            .add_load(Load("load1"))
+            AbstractPowerSupplySystemDagBuilder()
+            .add_bus(name="bus1")
+            .add_load(name="load1")
         )
 
         with pytest.raises(NoSuchObject) as e:
@@ -27,7 +28,9 @@ class TestBuilder:
         builder.add_connection(conn)
 
     def test_add_connection_2(self):
-        builder = AbstractPowerSupplySystemBuilder(create_objects_from_connections=True)
+        builder = AbstractPowerSupplySystemDagBuilder(
+            create_objects_from_connections=True
+        )
 
         conn = Connection(bus="bus1", load="load1", redundancy=1)
         builder.add_connection(conn)
