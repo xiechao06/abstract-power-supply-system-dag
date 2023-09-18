@@ -1,7 +1,7 @@
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 
 class Connection(NamedTuple):
-    bus: str
-    load: str
-    redundancy: int
+    from_: str
+    to: str
+    extras: Any

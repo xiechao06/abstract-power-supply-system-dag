@@ -30,3 +30,9 @@ amt.disconnect(load="load_A", bus="bus_1")
 amt.loads["load_A"].redundancy += 1
 
 ```
+
+## Limitations
+
+* 电源一定接开关
+* 开关接汇流条, DC/DC或者负载
+* 汇流条下有DC/DC或者其他开关

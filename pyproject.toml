@@ -22,3 +22,9 @@ dev-dependencies = []
 
 [tool.hatch.metadata]
 allow-direct-references = true
+
+[tool.ruff]
+extend-exclude = ["temp.py"]
+
+[tool.pytest.ini_options]
+addopts = "-s"

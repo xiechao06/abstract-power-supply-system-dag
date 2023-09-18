@@ -1,114 +1,72 @@
 from __future__ import annotations
 
-from typing_extensions import Unpack
+from typing import Any, cast
 
-from .bus import BusData
+from apssdag.dag import AbstractPowerSupplySystemDag
+from apssdag.devices.power_supply import PowerSupply
+from apssdag.node import Node
+from apssdag.typings import DeviceType
+
 from .connection import Connection
-from .dag import AbstractPowerSupplySystemDag
-from .exceptions import NoSuchObject
-from .load import LoadData
-from .power_supply import PowerSupplyData
+from .exceptions import DuplicateConnection, DuplicateDevice, NoSuchDevice
 
 
 class AbstractPowerSupplySystemDagBuilder:
-    _create_objects_from_connections: bool
-    power_supplies: dict[str, PowerSupplyData]
-    buses: dict[str, BusData]
-    loads: dict[str, LoadData]
-    connections: list[Connection]
+    connections: dict[str, list[Connection]]
+    devices: dict[str, DeviceType]
 
-    def __init__(self, create_objects_from_connections=False):
+    def __init__(self):
         """initialize builder
 
         Args:
             create_objects_from_connections (bool, optional): 是否从连接关系中自动
                 创建对象.  Defaults to False.
         """
-        self._create_objects_from_connections = create_objects_from_connections
-        self.power_supplies = {}
-        self.buses = {}
-        self.loads = {}
-        self.connections = []
+        self.devices = {}
+        self.connections = {}
 
-    def add_power_supply(
-        self, **kwargs: Unpack[PowerSupplyData]
+    def add_device(self, data: DeviceType) -> AbstractPowerSupplySystemDagBuilder:
+        if data.name in self.devices:
+            raise DuplicateDevice(data.name)
+        self.devices[data.name] = data
+        return self
+
+    def add_connection(
+        self, *, from_: str, to: str, extras: Any = None
     ) -> AbstractPowerSupplySystemDagBuilder:
-        """添加一个供电
-        ```python
-        builder.add_power_supply(name="power_supply_1", ...)
-
-        ps = PowerSupplyData(name="power_supply_1", ...)
-        builder.add_power_supply(**ps)
-        ```
-
-        Returns:
-            AbstractPowerSupplySystemDagBuilder: self
-        """
-        power_supply = PowerSupplyData(kwargs)
-        self.power_supplies[power_supply["name"]] = power_supply
-        return self
-
-    def add_bus(self, **kwargs: Unpack[BusData]) -> AbstractPowerSupplySystemDagBuilder:
-        """添加一个汇流条
-        ```python
-        builder.add_bus(name="bus1", ...)
-
-        bus = BusData(name="bus1")
-        builder.add_bus(**bus)
-        ```
-
-        Returns:
-            AbstractPowerSupplySystemDagBuilder: self
-        """
-        bus = BusData(kwargs)
-        self.buses[bus["name"]] = bus
-        return self
-
-    def add_load(
-        self, **kwargs: Unpack[LoadData]
-    ) -> AbstractPowerSupplySystemDagBuilder:
-        """新增一个负载
-        参数是负载属性， 调用方法如下:
-
-        ```python
-        builder.add_load(name="load1", ...)
-
-        load = LoadData(name="load1", ...)
-        builder.add_load(**load)
-        ```
-
-        Returns:
-            AbstractPowerSupplySystemDagBuilder: self
-        """
-
-        load = LoadData(kwargs)
-        self.loads[load["name"]] = load
-        return self
-
-    def add_connection(self, conn: Connection) -> AbstractPowerSupplySystemDagBuilder:
         """添加一条连接（即负载统计表记录）
 
         Args:
-            conn (Connection): 被新增的记录
+            kwargs (Unpack[Connection]): 被新增的记录
 
         Raises:
             NoSuchObject: 当不允许从连接中创建对象时, 即not
                 create_objects_from_connections , 连接中的汇流条或者负载不存在
 
         Returns:
-            int: 新增记录的id, 从1开始
+            AbstractPowerSupplySystemDagBuilder: self
 
         """
-        if conn.load not in self.loads:
-            if not self._create_objects_from_connections:
-                raise NoSuchObject(conn.load, type="load")
-            self.loads[conn.load] = LoadData(name=conn.load)
-        if conn.bus not in self.buses:
-            if not self._create_objects_from_connections:
-                raise NoSuchObject(conn.bus, type="bus")
-            self.buses[conn.bus] = BusData(name=conn.bus)
-        self.connections.append(conn)
+        conn = Connection(from_=from_, to=to, extras=extras)
+        if conn.from_ not in self.devices:
+            raise NoSuchDevice(conn.from_)
+        if conn.to not in self.devices:
+            raise NoSuchDevice(conn.to)
+        if any(conn.to == conn_.to for conn_ in self.connections.get(conn.from_, [])):
+            raise DuplicateConnection(conn)
+        self.connections.setdefault(conn.from_, []).append(conn)
         return self
 
-    # def build(self) -> AbstractPowerSupplySystemDag:
-    #     pass
+    def build(self) -> AbstractPowerSupplySystemDag:
+        dag = AbstractPowerSupplySystemDag()
+        for device_data in self.devices.values():
+            conns = self.connections.get(device_data.name)
+            node = Node[type(device_data)](device_data, conns)
+            if isinstance(device_data, PowerSupply):
+                dag.roots.append(cast(Node[PowerSupply], node))
+            dag.devices[node.data.name] = node
+        # set children
+        for node in dag.devices.values():
+            for conn in node.conns:
+                node.children.append(dag.devices[conn.to])
+        return dag
