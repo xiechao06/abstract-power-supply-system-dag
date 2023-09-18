@@ -16,4 +16,3 @@ class AbstractPowerSupplySystemDag:
         self.roots = []
         self.conns = {}
         self.nodes = {}
-        self.nodes = {}
