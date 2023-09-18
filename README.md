@@ -4,6 +4,8 @@
 
 供电系统抽象有向无环图(directed acyclic graph 或 dag)，是供电系统分析的核心数据结构
 
+[Documentation](https://xiechao06.github.io/abstract-power-supply-system-dag/apssdag.html)
+
 ## Sample
 
 [sample](./sample.py)
