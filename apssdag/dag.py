@@ -6,15 +6,14 @@ from apssdag.devices.power_supply import PowerSupply
 from apssdag.devices.switch import Switch
 from apssdag.node import Node
 
-Devices = dict[str, Node[PowerSupply | Switch | DcDc | Bus | Load]]
-
 
 class AbstractPowerSupplySystemDag:
     roots: list[Node[PowerSupply]]
     conns: dict[str, list[Connection]]
-    devices: Devices
+    nodes: dict[str, Node[PowerSupply | Switch | DcDc | Bus | Load]]
 
     def __init__(self):
         self.roots = []
         self.conns = {}
-        self.devices = {}
+        self.nodes = {}
+        self.nodes = {}

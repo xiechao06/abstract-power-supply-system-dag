@@ -59,32 +59,49 @@ class TestBuilder:
         dag = builder.build()
         assert len(dag.roots) == 1
 
-        assert "power_supply_1" in dag.devices
+        assert "power_supply_1" in dag.nodes
 
         def assert_0_0(root: Node[PowerSupply]):
             assert root.data.name == "power_supply_1"
             assert len(root.conns) == 1
             assert len(root.children) == 1
+            assert len(dag.conns["power_supply_1"]) == 1
+            assert dag.conns["power_supply_1"][0].to.data.name == "switch_1"
 
             def assert_1_0(node: Node[Switch]):
                 assert node.data.name == "switch_1"
                 assert len(node.children) == 1
+                conns = dag.conns[node.data.name]
+                assert len(conns) == 1
+                assert conns[0].to.data.name == "dc_dc_1"
 
                 def assert_2_0(node: Node[DcDc]):
                     assert node.data.name == "dc_dc_1"
                     assert len(node.children) == 1
 
+                    conns = dag.conns[node.data.name]
+                    assert len(conns) == 1
+                    assert conns[0].to.data.name == "bus_1"
+
                     def assert_3_0(node: Node[Bus]):
                         assert node.data.name == "bus_1"
                         assert len(node.children) == 1
+                        conns = dag.conns[node.data.name]
+                        assert len(conns) == 1
+                        assert conns[0].to.data.name == "switch_2"
 
                         def assert_4_0(node: Node[Switch]):
                             assert node.data.name == "switch_2"
                             assert len(node.children) == 1
+                            conns = dag.conns[node.data.name]
+                            assert len(conns) == 1
+                            assert conns[0].to.data.name == "load_1"
 
                             def assert_5_0(node: Node[Load]):
                                 assert node.data.name == "load_1"
                                 assert len(node.children) == 0
+                                conns = dag.conns.get(node.data.name)
+                                assert not conns
 
                             assert_5_0(node.children[0])
 

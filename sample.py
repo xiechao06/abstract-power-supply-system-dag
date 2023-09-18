@@ -30,7 +30,7 @@ def main():
 
     dag = builder.build()
 
-    pprint.pprint(dag.devices)
+    pprint.pprint(dag.nodes)
 
 
 if __name__ == "__main__":

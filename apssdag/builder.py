@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from itertools import chain
+from re import I
 from typing import Any, cast
 
 from apssdag.dag import AbstractPowerSupplySystemDag
@@ -7,12 +9,12 @@ from apssdag.devices.power_supply import PowerSupply
 from apssdag.node import Node
 from apssdag.typings import DeviceType
 
-from .connection import Connection
+from .connection import Connection, PlainConnection
 from .exceptions import DuplicateConnection, DuplicateDevice, NoSuchDevice
 
 
 class AbstractPowerSupplySystemDagBuilder:
-    connections: dict[str, list[Connection]]
+    connections: dict[str, list[PlainConnection]]
     devices: dict[str, DeviceType]
 
     def __init__(self):
@@ -47,7 +49,7 @@ class AbstractPowerSupplySystemDagBuilder:
             AbstractPowerSupplySystemDagBuilder: self
 
         """
-        conn = Connection(from_=from_, to=to, extras=extras)
+        conn = PlainConnection(from_=from_, to=to, extras=extras)
         if conn.from_ not in self.devices:
             raise NoSuchDevice(conn.from_)
         if conn.to not in self.devices:
@@ -64,9 +66,15 @@ class AbstractPowerSupplySystemDagBuilder:
             node = Node[type(device_data)](device_data, conns)
             if isinstance(device_data, PowerSupply):
                 dag.roots.append(cast(Node[PowerSupply], node))
-            dag.devices[node.data.name] = node
+            dag.nodes[node.data.name] = node
         # set children
-        for node in dag.devices.values():
+        for node in dag.nodes.values():
             for conn in node.conns:
-                node.children.append(dag.devices[conn.to])
+                node.children.append(dag.nodes[conn.to])
+        for from_ in self.connections:
+            dag.conns[from_] = list(
+                Connection.from_plain_conn(conn, dag.nodes)
+                for conn in self.connections[from_]
+            )
+
         return dag
