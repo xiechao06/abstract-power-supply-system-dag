@@ -1,5 +1,5 @@
 [project]
-name = "abstract-power-supply-system-dag"
+name = "apssdag"
 version = "0.1.0"
 description = "Add your description here"
 authors = [
