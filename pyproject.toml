@@ -6,9 +6,7 @@ authors = [
     { name = "xiechao06", email = "xiechao06@gmail.com" }
 ]
 dependencies = [
-    "pytest>=7.4.2",
     "typing-extensions>=4.7.1",
-    "pdoc>=13.1.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.7"
@@ -19,7 +17,10 @@ build-backend = "hatchling.build"
 
 [tool.rye]
 managed = true
-dev-dependencies = []
+dev-dependencies = [
+    "pytest>=7.4.2",
+    "pdoc>=13.1.1",
+]
 
 [tool.hatch.metadata]
 allow-direct-references = true
