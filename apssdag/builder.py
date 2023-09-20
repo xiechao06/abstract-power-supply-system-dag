@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from itertools import chain
-from re import I
 from typing import Any, cast
 
 from apssdag.dag import AbstractPowerSupplySystemDag
@@ -55,7 +53,7 @@ class AbstractPowerSupplySystemDagBuilder:
         if conn.to not in self.devices:
             raise NoSuchDevice(conn.to)
         if any(conn.to == conn_.to for conn_ in self.connections.get(conn.from_, [])):
-            raise DuplicateConnection(conn)
+            raise DuplicateConnection(from_=conn.from_, to=conn.to, extras=conn.extras)
         self.connections.setdefault(conn.from_, []).append(conn)
         return self
 
