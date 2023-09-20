@@ -1,4 +1,4 @@
-from apssdag.connection import PlainConnection
+from typing import Any
 
 
 class NoSuchDevice(Exception):
@@ -18,11 +18,15 @@ class DuplicateDevice(Exception):
 
 
 class DuplicateConnection(Exception):
-    value: PlainConnection
+    from_: str
+    to: str
+    extras: Any
 
-    def __init__(self, conn: PlainConnection):
+    def __init__(self, from_: str, to: str, extras: Any = None):
+        self.from_ = from_
+        self.to = to
+        self.extras = extras
         super().__init__(
-            f"Duplicate connection: from {conn.from_} to {conn.to},"
-            f" extras - {conn.extras}"
+            f"Duplicate connection: from {self.from_} to {self.to},"
+            f" extras - {self.extras}"
         )
-        self.value = conn
