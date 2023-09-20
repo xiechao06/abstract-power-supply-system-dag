@@ -21,9 +21,11 @@ class _Node:
 
 class AbstractPowerSupplySystemGraph:
     nodes: dict[str, _Node]
+    edges: list[Edge]
 
     def __init__(self):
         self.nodes = {}
+        self.edges = []
 
     def add_device(self, device: DeviceType):
         if device.name in self.nodes:
@@ -44,6 +46,7 @@ class AbstractPowerSupplySystemGraph:
             raise DuplicateConnection(from_, to, extras)
 
         edge = Edge(from_, to, extras)
+        self.edges.append(edge)
 
         from_device.adj_list.append((to, edge))
         to_device.adj_list.append((from_, edge))
