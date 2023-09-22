@@ -1,7 +1,7 @@
 from typing import Generic, TypeVar
 
-from apssdag.connection import PlainConnection
-from apssdag.typings import DeviceType
+from apssm.connection import PlainConnection
+from apssm.typings import DeviceType
 
 ND = TypeVar("ND", bound="DeviceType")
 

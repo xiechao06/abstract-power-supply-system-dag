@@ -1,36 +1,37 @@
 import pprint
 
-from apssdag.builder import AbstractPowerSupplySystemDagBuilder
-from apssdag.devices.bus import Bus
-from apssdag.devices.dc_dc_converter import DcDc
-from apssdag.devices.load import Load
-from apssdag.devices.power_supply import PowerSupply
-from apssdag.devices.switch import Switch
+from apssm.devices.bus import Bus
+from apssm.devices.dc_dc import DcDc
+from apssm.devices.load import Load
+from apssm.devices.power_supply import PowerSupply
+from apssm.devices.switch import Switch
+from apssm.graph import AbstractPowerSupplySystemGraph
 
 
 def main():
-    builder = AbstractPowerSupplySystemDagBuilder()
+    graph = AbstractPowerSupplySystemGraph()
 
-    builder.add_device(PowerSupply(name="power_supply_1"))
+    graph.add_device(PowerSupply(name="power_supply_1"))
 
-    builder.add_device(Switch(name="switch_1"))
-    builder.add_connection(from_="power_supply_1", to="switch_1")
+    graph.add_device(Switch(name="switch_1"))
+    graph.add_edge(first=("power_supply_1", 0), second=("switch_1", 0))
 
-    builder.add_device(DcDc(name="dc_dc_1"))
-    builder.add_connection(from_="switch_1", to="dc_dc_1")
+    graph.add_device(DcDc(name="dc_dc_1"))
+    graph.add_edge(first=("switch_1", 1), second=("dc_dc_1", 0))
 
-    builder.add_device(Bus(name="bus_1"))
-    builder.add_connection(from_="dc_dc_1", to="bus_1")
+    graph.add_device(Bus(name="bus_1"))
+    graph.add_edge(first=("dc_dc_1", 1), second=("bus_1", 0))
 
-    builder.add_device(Switch(name="switch_2"))
-    builder.add_connection(from_="bus_1", to="switch_2")
+    graph.add_device(Switch(name="switch_2"))
+    graph.add_edge(first=("bus_1", 0), second=("switch_2", 0))
 
-    builder.add_device(Load(name="load_1"))
-    builder.add_connection(from_="switch_2", to="load_1")
+    graph.add_device(Load(name="load_1"))
+    graph.add_edge(first=("switch_2", 1), second=("load_1", 0))
 
-    dag = builder.build()
+    forest = graph.gen_forest()
 
-    pprint.pprint(dag.nodes)
+    for tree in forest:
+        pprint.pprint(tree)
 
 
 if __name__ == "__main__":
