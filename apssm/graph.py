@@ -148,7 +148,6 @@ class AbstractPowerSupplySystemGraph:
             visited: set[str] = set()
             while stack:
                 candidate_port, parent_port_id = stack.pop()
-                print(f"SEARCH {candidate_port.id}")
                 if candidate_port in visited:
                     continue
                 visited.add(candidate_port.id)

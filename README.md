@@ -25,3 +25,9 @@ Install [rye](https://rye-up.com/guide/installation/), then:
 rye sync
 pytest
 ```
+
+## Benchmarks
+
+- Generate forest
+
+![gen forest benchmark](assets/gen_forest_bench.png)
