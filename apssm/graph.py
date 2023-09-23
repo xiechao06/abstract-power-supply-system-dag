@@ -224,6 +224,8 @@ class AbstractPowerSupplySystemGraph:
     ) -> dict[str, list[tuple[ThinPort, ...]]]:
         """find the passages to the given ports
 
+        **NOTE! 为了防止反复生成森林， 请一次性传入尽可能多的要查找通路的目标端口**
+
         Args:
             destinations (Iterable[tuple[str, int]  |  ThinPort]): as the name
             truth_table (dict[str, bool] | None, optional): the truth table for switchs.
@@ -232,6 +234,8 @@ class AbstractPowerSupplySystemGraph:
         Returns:
             dict[str, list[tuple[ThinPort, ...]]]: key is each destination's id,
                 value is a list of passages to a give destination
+
+
         """
         truth_table = truth_table or {}
         forest = self.gen_forest(truth_table)

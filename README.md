@@ -31,3 +31,7 @@ pytest
 - Generate forest
 
 ![gen forest benchmark](assets/gen_forest_bench.png)
+
+- Find passages
+
+![find passages benchmark](assets/find_passsages_bench.png)
