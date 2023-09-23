@@ -23,7 +23,7 @@
 
 ## Limitations
 
-- DAG的根一定是电源
+- TREE的根一定是电源
 - 电源一定接开关
 - 开关接汇流条, DC/DC 或者负载
 - 汇流条下有 DC/DC 或者其他开关
@@ -46,3 +46,16 @@ pytest
 - Find passages
 
 ![find passages benchmark](assets/find_passsages_bench.png)
+
+## FAQ
+
+- 为什么要用forest(森林)而不是dag(有向无环图)来描述供电系统的运行状态?
+
+首先dag可以表达为逻辑上等价的forest， 只是forest的空间效率低于dag.
+
+![Alt text](assets/forest_vs_dag.jpg)
+
+严格来说，由于不能存在多路供电，供电系统的运行状态是forest， 但是由于我们没有实现表决算法，实际上供电系统
+的运行状态也可以用dag描述。
+
+所以，仅仅就目前而言， 用forest只是出于算法实现的简化， 但通过性能测试，forest也足以满足需求， 所以先用forest描述供电系统的运行状态。
