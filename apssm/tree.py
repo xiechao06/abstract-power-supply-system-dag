@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from typing import Any, NamedTuple, TypeVar
+from typing import Any, NamedTuple, Optional, TypeVar
+
+from loguru import logger
 
 from apssm.devices.bus import Bus
 from apssm.devices.dc_dc import DcDc
@@ -7,9 +9,8 @@ from apssm.devices.diode import Diode
 from apssm.devices.load import Load
 from apssm.devices.power_supply import PowerSupply
 from apssm.devices.switch import Switch
+from apssm.thin_port import ThinPort
 from apssm.typing import DeviceType
-
-PathType = list[str]
 
 NT = TypeVar("NT", PowerSupply, Switch, DcDc, Bus, Load, Diode)
 
@@ -19,6 +20,7 @@ class DirectedPort:
     port_index: int
     edges: list["DirectedEdge"]
     children: list["DirectedPort"]
+    parent: Optional["DirectedPort"]
 
     def __init__(
         self,
@@ -30,12 +32,16 @@ class DirectedPort:
         self.port_index = port_index
         self.edges = []
         self.children = []
+        self.parent = None
 
     @property
     def id(self) -> str:
         from apssm.gen_port_id import gen_port_id
 
         return gen_port_id(self.device.name, self.port_index)
+
+    def as_thin_port(self) -> ThinPort:
+        return ThinPort(self.device.name, self.port_index)
 
 
 class DirectedEdge(NamedTuple):
@@ -67,7 +73,27 @@ class DirectedEdge(NamedTuple):
 @dataclass
 class AbstractPowerSupplySystemTree:
     root: DirectedPort
-    # nodes: dict[str, DirectedNode]
+    nodes: dict[str, DirectedPort]
 
-    def find_paths(self, to: str) -> tuple[PathType]:
-        pass
+    def find_passage(self, to: ThinPort) -> tuple[ThinPort, ...] | None:
+        """
+        Finds the passage from the root of the tree to the given ThinPort.
+
+        Args:
+            to (ThinPort): The ThinPort to find the passage to.
+
+        Returns:
+            tuple[ThinPort, ...] | None: A tuple of ThinPorts representing the passage
+                from the root to the given ThinPort, or None if there is no path to
+                the given ThinPort.
+        """
+        try:
+            node = self.nodes[to.id]
+        except KeyError:
+            logger.debug(f"no such port {to.id} in tree(root: {self.root.id})")
+            # no path to `to`
+            return
+        path: list[ThinPort] = [node.as_thin_port()]
+        while node := node.parent:
+            path.append(node.as_thin_port())
+        return tuple(reversed(path))

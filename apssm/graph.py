@@ -1,4 +1,4 @@
-from typing import Any, NamedTuple
+from typing import Any, Iterable, NamedTuple
 
 from apssm.devices.dc_dc import DcDc
 from apssm.devices.diode import Diode
@@ -128,6 +128,9 @@ class AbstractPowerSupplySystemGraph:
         """
         if not truth_table:
             truth_table = {}
+        for k in truth_table:
+            if k not in self.devices:
+                raise NoSuchDevice(k)
         directed_roots: list[DirectedPort] = []
         for port in self.ports.values():
             if isinstance(port.device, PowerSupply):
@@ -144,19 +147,20 @@ class AbstractPowerSupplySystemGraph:
         # search from roots
         for directed_root in directed_roots:
             assert isinstance(directed_root.device, PowerSupply)
-            stack: list[tuple[DirectedPort, str | None]] = [(directed_root, None)]
-            visited: set[str] = set()
+            stack: list[tuple[DirectedPort, DirectedPort | None]] = [
+                (directed_root, None)
+            ]
+            directed_ports: dict[str, DirectedPort] = {}
             while stack:
-                candidate_port, parent_port_id = stack.pop()
-                if candidate_port in visited:
-                    continue
-                visited.add(candidate_port.id)
+                candidate_port, parent_port = stack.pop()
+                directed_ports[candidate_port.id] = candidate_port
                 # NOTE: 这里必须是一个clone， 因为后面会修改adj_list
                 adj_list = self.ports[candidate_port.id].adj_list[:]
                 # 若是闭合开关或者dcdc, 视为存在一个到另外一个端口的连接
-                is_closed_switch = (
-                    isinstance(candidate_port.device, Switch)
-                    and candidate_port.device.on
+                is_closed_switch = isinstance(
+                    candidate_port.device, Switch
+                ) and truth_table.get(
+                    candidate_port.device.name, candidate_port.device.on
                 )
                 is_dc_dc = isinstance(candidate_port.device, DcDc)
                 if is_closed_switch or is_dc_dc:
@@ -178,7 +182,7 @@ class AbstractPowerSupplySystemGraph:
                     )
                 for port, extras in adj_list:
                     # 防止回溯到父节点
-                    if port.id == parent_port_id:
+                    if parent_port and port.id == parent_port.id:
                         continue
                     child_port = self.ports[port.id]
                     # 如果找到了一个电源
@@ -197,6 +201,7 @@ class AbstractPowerSupplySystemGraph:
                     ):
                         continue
                     candidate_port.children.append(directed_child_port)
+                    directed_child_port.parent = candidate_port
                     directed_edge = DirectedEdge(
                         from_=candidate_port,
                         to=directed_child_port,
@@ -205,7 +210,36 @@ class AbstractPowerSupplySystemGraph:
                     visited_edges.add(directed_edge.id)
                     candidate_port.edges.append(directed_edge)
 
-                    stack.append((directed_child_port, candidate_port.id))
-            forest.append(AbstractPowerSupplySystemTree(root=directed_root))
+                    stack.append((directed_child_port, candidate_port))
+            forest.append(
+                AbstractPowerSupplySystemTree(root=directed_root, nodes=directed_ports)
+            )
 
         return tuple(forest)
+
+    def find_passages(
+        self,
+        destinations: Iterable[tuple[str, int] | ThinPort],
+        truth_table: dict[str, bool] | None = None,
+    ) -> dict[str, list[tuple[ThinPort, ...]]]:
+        """find the passages to the given ports
+
+        Args:
+            destinations (Iterable[tuple[str, int]  |  ThinPort]): as the name
+            truth_table (dict[str, bool] | None, optional): the truth table for switchs.
+                Defaults to None.
+
+        Returns:
+            dict[str, list[tuple[ThinPort, ...]]]: key is each destination's id,
+                value is a list of passages to a give destination
+        """
+        truth_table = truth_table or {}
+        forest = self.gen_forest(truth_table)
+        res: dict[str, list[tuple[ThinPort, ...]]] = {}
+        for to in destinations:
+            if not isinstance(to, ThinPort):
+                to = ThinPort(*to)
+            for tree in forest:
+                if passage := tree.find_passage(to):
+                    res.setdefault(to.id, []).append(passage)
+        return res
