@@ -117,7 +117,7 @@ class AbstractPowerSupplySystemGraph:
     def gen_forest(
         self, truth_table: dict[str, bool] | None = None
     ) -> tuple[AbstractPowerSupplySystemTree, ...]:
-        """根据真值表生成dag
+        """根据真值表生成森林
 
             Args:
                 truth_table (dict[str, bool] | None, optional): 每个开关对应的开关状态.

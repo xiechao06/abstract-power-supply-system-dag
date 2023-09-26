@@ -280,8 +280,13 @@ def graph_fixture():
 def test_gen_forest_6(graph_fixture: AbstractPowerSupplySystemGraph):
     graph = graph_fixture
     devices = graph.devices
+    truth_table = {
+        "switch_0": True,
+        "switch_1": True,
+        "switch_2": True,
+    }
     with pytest.raises(ChargePowerSupply) as e:
-        graph.gen_forest()
+        graph.gen_forest(truth_table)
     assert (
         e.value.from_ == devices["power_supply_0"]
         and e.value.to == devices["power_supply_1"]
